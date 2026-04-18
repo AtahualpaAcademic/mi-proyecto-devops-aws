@@ -1,17 +1,19 @@
 version: 0.2
-
 phases:
   pre_build:
     commands:
-      - echo Iniciando sesión en Docker Hub...
-      # Si usas Docker Hub, aquí iría el login. Por ahora solo imprimiremos el mensaje.
+      - echo Conectando a Amazon ECR...
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin TU_ID_CUENTA.dkr.ecr.us-east-1.amazonaws.com
   build:
     commands:
-      - echo Construyendo la imagen de Docker...
-      - docker build -t mi-app-flask ./app
+      - echo Construyendo imagen...
+      - docker build -t mi-app-flask-repo .
+      - docker tag mi-app-flask-repo:latest TU_ID_CUENTA.dkr.ecr.us-east-1.amazonaws.com/mi-app-flask-repo:latest
   post_build:
     commands:
-      - echo Construcción completada el `date`
+      - echo Subiendo imagen a ECR...
+      - docker push TU_ID_CUENTA.dkr.ecr.us-east-1.amazonaws.com/mi-app-flask-repo:latest
+      - printf '[{"name":"CONTENEDOR_APP","imageUri":"%s"}]' TU_ID_CUENTA.dkr.ecr.us-east-1.amazonaws.com/mi-app-flask-repo:latest > imagedefinitions.json
 artifacts:
   files:
-    - '**/*' 
+    - imagedefinitions.json
